@@ -13,6 +13,7 @@ namespace CodeBase.Player
 
         [SerializeField] private GameObject cameras;
         [SerializeField] private Transform cameraTransform;
+        [SerializeField] private GameObject textGameobject;
 
         private CharacterController controller;
         private Vector3 velocity;
@@ -20,12 +21,17 @@ namespace CodeBase.Player
 
         private void Start()
         {
-            if (!IsOwner)
+            if (IsOwner == false)
             {
                 enabled = false;
                 cameras.SetActive(false);
                 return;
             }
+            else
+            {
+                textGameobject.SetActive(false);
+            }
+
             controller = GetComponent<CharacterController>();
         }
 
