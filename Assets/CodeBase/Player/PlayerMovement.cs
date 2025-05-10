@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using System;
 
 namespace CodeBase.Player
 {
@@ -7,38 +8,44 @@ namespace CodeBase.Player
     public class PlayerMovement : NetworkBehaviour
     {
         [Header("Movement Settings")]
-        [SerializeField] private float moveSpeed = 5f;
-        [SerializeField] private float jumpHeight = 2f;
+        [SerializeField] private float moveSpeed = 5f; 
+        [SerializeField] private float jumpHeight = 2f; 
         [SerializeField] private float gravity = -9.81f;
 
+        [Header("References")]
         [SerializeField] private GameObject cameras;
         [SerializeField] private Transform cameraTransform;
-        [SerializeField] private GameObject textGameobject;
+        [SerializeField] private GameObject nameTextGameobject;
+        [SerializeField] private GameObject hpTextGameobject;
 
         private CharacterController controller;
         private Vector3 velocity;
         private bool isGrounded;
+        private bool isWalking;
+
+        public event Action<bool> OnWalkStateChanged;
+        public event Action OnJump;
 
         private void Start()
         {
-            if (IsOwner == false)
+            controller = GetComponent<CharacterController>();
+
+            if (!IsOwner)
             {
                 enabled = false;
                 cameras.SetActive(false);
+                hpTextGameobject.SetActive(false);
                 return;
             }
             else
             {
-                textGameobject.SetActive(false);
+                nameTextGameobject.SetActive(false);
             }
-
-            controller = GetComponent<CharacterController>();
         }
 
         private void Update()
         {
             isGrounded = controller.isGrounded;
-
             if (isGrounded && velocity.y < 0)
                 velocity.y = -2f;
 
@@ -47,21 +54,27 @@ namespace CodeBase.Player
 
             Vector3 camForward = cameraTransform.forward;
             Vector3 camRight = cameraTransform.right;
-
             camForward.y = 0f;
             camRight.y = 0f;
             camForward.Normalize();
             camRight.Normalize();
 
             Vector3 move = camRight * moveX + camForward * moveZ;
-            if (move.magnitude > 0.1f)
+
+            bool shouldWalk = move.magnitude > 0.1f;
+            if (shouldWalk != isWalking)
+            {
+                isWalking = shouldWalk;
+                OnWalkStateChanged?.Invoke(isWalking);
+            }
+
+            if (shouldWalk)
             {
                 Quaternion toRotation = Quaternion.LookRotation(move, Vector3.up);
                 transform.rotation = Quaternion.Slerp(transform.rotation, toRotation, Time.deltaTime * 10f);
             }
 
             controller.Move(move * moveSpeed * Time.deltaTime);
-
             HandleJump();
 
             velocity.y += gravity * Time.deltaTime;
@@ -73,7 +86,9 @@ namespace CodeBase.Player
             if (Input.GetButtonDown("Jump") && isGrounded)
             {
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                OnJump?.Invoke();
             }
         }
     }
+
 }
