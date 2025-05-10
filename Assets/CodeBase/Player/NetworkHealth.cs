@@ -9,7 +9,7 @@ namespace CodeBase.Player
 
         public void TakeDamage(int amount, ulong attackerClientId)
         {
-            if (!IsOwner) return;
+            if (!IsServer) return;
 
             Health.Value -= amount;
             if (Health.Value <= 0)

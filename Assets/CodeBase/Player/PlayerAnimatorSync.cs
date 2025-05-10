@@ -7,7 +7,8 @@ namespace CodeBase.Player
     [RequireComponent(typeof(NetworkAnimator))]
     public class PlayerAnimatorSync : NetworkBehaviour
     {
-        private NetworkAnimator networkAnimator; private PlayerMovement playerMovement; private static readonly int WalkHash = Animator.StringToHash("Walk");
+        private NetworkAnimator networkAnimator; 
+        private PlayerMovement playerMovement;
 
         private void Awake()
         {
@@ -35,7 +36,17 @@ namespace CodeBase.Player
 
         private void HandleWalkStateChanged(bool isWalking)
         {
-            networkAnimator.Animator.SetBool("Walk", isWalking);
+            if (IsOwner)
+            {
+                if (isWalking)
+                {
+                    networkAnimator.SetTrigger("StartWalk");
+                }
+                else
+                {
+                    networkAnimator.SetTrigger("StopWalk");
+                }
+            }
         }
 
         private void HandleJump()
